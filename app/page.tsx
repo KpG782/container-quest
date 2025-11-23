@@ -239,6 +239,13 @@ export default function ContainerQuizGame() {
   const [showTabWarning, setShowTabWarning] = useState(false);
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
   const [mouseLeaveCount, setMouseLeaveCount] = useState(0);
+  const [currentSongUrl, setCurrentSongUrl] = useState("");
+
+  // Song options for random selection
+  const songs = [
+    "https://www.youtube.com/embed/u5CVsCnxyXg?autoplay=1&start=0", // No Surprises - Radiohead
+    "https://www.youtube.com/embed/ZVgHPSyEIqk?autoplay=1&start=0"  // Let Down - Radiohead
+  ];
 
   // Tab visibility and mouse detection
   useEffect(() => {
@@ -246,14 +253,27 @@ export default function ContainerQuizGame() {
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
+        // User left - show warning with random song
+        const randomSong = songs[Math.floor(Math.random() * songs.length)];
+        setCurrentSongUrl(randomSong);
         setShowTabWarning(true);
         setTabSwitchCount((prev) => prev + 1);
+      } else {
+        // User returned - close warning
+        setShowTabWarning(false);
       }
     };
 
     const handleBlur = () => {
+      const randomSong = songs[Math.floor(Math.random() * songs.length)];
+      setCurrentSongUrl(randomSong);
       setShowTabWarning(true);
       setTabSwitchCount((prev) => prev + 1);
+    };
+
+    const handleFocus = () => {
+      // User returned to window - close warning
+      setShowTabWarning(false);
     };
 
     const handleMouseLeave = (e: MouseEvent) => {
@@ -263,19 +283,30 @@ export default function ContainerQuizGame() {
         e.clientX >= window.innerWidth ||
         e.clientY >= window.innerHeight
       ) {
+        const randomSong = songs[Math.floor(Math.random() * songs.length)];
+        setCurrentSongUrl(randomSong);
         setShowTabWarning(true);
         setMouseLeaveCount((prev) => prev + 1);
       }
     };
 
+    const handleMouseEnter = () => {
+      // Mouse returned to page - close warning
+      setShowTabWarning(false);
+    };
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
     document.addEventListener("mouseleave", handleMouseLeave);
+    document.addEventListener("mouseenter", handleMouseEnter);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
       document.removeEventListener("mouseleave", handleMouseLeave);
+      document.removeEventListener("mouseenter", handleMouseEnter);
     };
   }, [gameState]);
 
@@ -371,20 +402,30 @@ export default function ContainerQuizGame() {
   if (gameState === "welcome") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
-        {/* Tab/Mouse Warning Dialog */}
+        {/* Tab/Mouse Warning Dialog with YouTube Video */}
         {showTabWarning && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-            <div className="bg-gradient-to-br from-orange-900/90 to-red-900/90 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full border-2 border-orange-500 shadow-2xl">
-              <div className="text-center space-y-6">
-                <AlertTriangle className="w-16 h-16 text-orange-400 mx-auto animate-bounce" />
-                <div>
-                  <h3 className="text-2xl font-bold text-white mb-2">
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-gradient-to-br from-orange-900/95 to-red-900/95 backdrop-blur-lg rounded-2xl p-8 max-w-3xl w-full border-2 border-orange-500 shadow-2xl">
+              <div className="space-y-6">
+                <div className="text-center">
+                  <AlertTriangle className="w-16 h-16 text-orange-400 mx-auto animate-bounce" />
+                  <h3 className="text-2xl font-bold text-white mt-4 mb-2">
                     👀 Hey! Stay Focused!
                   </h3>
                   <p className="text-orange-200 text-lg">
-                    Your mouse left the page or you switched tabs. Stay here to
-                    learn better!
+                    Your mouse left the page or you switched tabs. Stay here to learn better!
                   </p>
+                </div>
+
+                {/* YouTube Video Embed */}
+                <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                  <iframe
+                    className="absolute top-0 left-0 w-full h-full rounded-lg border-0"
+                    src={currentSongUrl}
+                    title="Radiohead - Educational Focus Reminder"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
                 </div>
 
                 <div className="bg-black/30 rounded-lg p-4 space-y-2">
@@ -406,6 +447,9 @@ export default function ContainerQuizGame() {
                   </div>
                   <p className="text-orange-300 text-xs mt-2 italic">
                     💡 Staying focused helps you learn better!
+                  </p>
+                  <p className="text-orange-200/70 text-xs mt-3 border-t border-orange-400/30 pt-2">
+                    🎵 Music: Radiohead ("No Surprises" or "Let Down") • For educational purposes only
                   </p>
                 </div>
 
@@ -654,20 +698,30 @@ export default function ContainerQuizGame() {
       <div
         className={`min-h-screen bg-gradient-to-br ${bgColor} p-4 md:p-8 transition-colors duration-500`}
       >
-        {/* Tab/Mouse Warning Dialog */}
+        {/* Tab/Mouse Warning Dialog with YouTube Video */}
         {showTabWarning && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-            <div className="bg-gradient-to-br from-orange-900/90 to-red-900/90 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full border-2 border-orange-500 shadow-2xl">
-              <div className="text-center space-y-6">
-                <AlertTriangle className="w-16 h-16 text-orange-400 mx-auto animate-bounce" />
-                <div>
-                  <h3 className="text-2xl font-bold text-white mb-2">
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-gradient-to-br from-orange-900/95 to-red-900/95 backdrop-blur-lg rounded-2xl p-8 max-w-3xl w-full border-2 border-orange-500 shadow-2xl">
+              <div className="space-y-6">
+                <div className="text-center">
+                  <AlertTriangle className="w-16 h-16 text-orange-400 mx-auto animate-bounce" />
+                  <h3 className="text-2xl font-bold text-white mt-4 mb-2">
                     👀 Hey! Stay Focused!
                   </h3>
                   <p className="text-orange-200 text-lg">
-                    Your mouse left the page or you switched tabs. Stay here to
-                    learn better!
+                    Your mouse left the page or you switched tabs. Stay here to learn better!
                   </p>
+                </div>
+
+                {/* YouTube Video Embed */}
+                <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                  <iframe
+                    className="absolute top-0 left-0 w-full h-full rounded-lg border-0"
+                    src={currentSongUrl}
+                    title="Radiohead - Educational Focus Reminder"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
                 </div>
 
                 <div className="bg-black/30 rounded-lg p-4 space-y-2">
@@ -689,6 +743,9 @@ export default function ContainerQuizGame() {
                   </div>
                   <p className="text-orange-300 text-xs mt-2 italic">
                     💡 Staying focused helps you learn better!
+                  </p>
+                  <p className="text-orange-200/70 text-xs mt-3 border-t border-orange-400/30 pt-2">
+                    🎵 Music: Radiohead ("No Surprises" or "Let Down") • For educational purposes only
                   </p>
                 </div>
 
