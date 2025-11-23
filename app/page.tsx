@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Zap,
   Server,
@@ -15,6 +15,7 @@ import {
   Box,
   CheckCircle,
   FileText,
+  AlertTriangle,
 } from "lucide-react";
 
 // Question bank with 4 easy, 4 intermediate, 2 hard
@@ -235,6 +236,48 @@ export default function ContainerQuizGame() {
   const [score, setScore] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [answeredQuestions, setAnsweredQuestions] = useState<any[]>([]);
+  const [showTabWarning, setShowTabWarning] = useState(false);
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [mouseLeaveCount, setMouseLeaveCount] = useState(0);
+
+  // Tab visibility and mouse detection
+  useEffect(() => {
+    if (gameState !== "playing") return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setShowTabWarning(true);
+        setTabSwitchCount((prev) => prev + 1);
+      }
+    };
+
+    const handleBlur = () => {
+      setShowTabWarning(true);
+      setTabSwitchCount((prev) => prev + 1);
+    };
+
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (
+        e.clientY <= 0 ||
+        e.clientX <= 0 ||
+        e.clientX >= window.innerWidth ||
+        e.clientY >= window.innerHeight
+      ) {
+        setShowTabWarning(true);
+        setMouseLeaveCount((prev) => prev + 1);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleBlur);
+    document.addEventListener("mouseleave", handleMouseLeave);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleBlur);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, [gameState]);
 
   // Shuffle questions: 4 easy + 4 intermediate + 2 hard
   const initializeQuestions = () => {
@@ -316,12 +359,67 @@ export default function ContainerQuizGame() {
     setSelectedAnswer(null);
     setShowResult(false);
     setAnsweredQuestions([]);
+    setTabSwitchCount(0);
+    setMouseLeaveCount(0);
+  };
+
+  const handleDismissWarning = () => {
+    setShowTabWarning(false);
   };
 
   // Welcome Screen
   if (gameState === "welcome") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+        {/* Tab/Mouse Warning Dialog */}
+        {showTabWarning && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-gradient-to-br from-orange-900/90 to-red-900/90 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full border-2 border-orange-500 shadow-2xl">
+              <div className="text-center space-y-6">
+                <AlertTriangle className="w-16 h-16 text-orange-400 mx-auto animate-bounce" />
+                <div>
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    👀 Hey! Stay Focused!
+                  </h3>
+                  <p className="text-orange-200 text-lg">
+                    Your mouse left the page or you switched tabs. Stay here to
+                    learn better!
+                  </p>
+                </div>
+
+                <div className="bg-black/30 rounded-lg p-4 space-y-2">
+                  <p className="text-white font-semibold text-lg">
+                    Distractions:{" "}
+                    <span className="text-orange-400">
+                      {tabSwitchCount + mouseLeaveCount}
+                    </span>
+                  </p>
+                  <div className="text-sm text-orange-200 space-y-1">
+                    <p>
+                      🖱️ Mouse left page:{" "}
+                      <span className="font-semibold">{mouseLeaveCount}x</span>
+                    </p>
+                    <p>
+                      🔄 Tab switches:{" "}
+                      <span className="font-semibold">{tabSwitchCount}x</span>
+                    </p>
+                  </div>
+                  <p className="text-orange-300 text-xs mt-2 italic">
+                    💡 Staying focused helps you learn better!
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleDismissWarning}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl font-bold text-lg hover:scale-105 transition-transform shadow-lg"
+                >
+                  ✓ Got it! Back to Quiz
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="max-w-2xl w-full text-center space-y-8 animate-fade-in">
           <div className="space-y-4">
             <Trophy className="w-20 h-20 text-yellow-400 mx-auto animate-bounce" />
@@ -556,6 +654,55 @@ export default function ContainerQuizGame() {
       <div
         className={`min-h-screen bg-gradient-to-br ${bgColor} p-4 md:p-8 transition-colors duration-500`}
       >
+        {/* Tab/Mouse Warning Dialog */}
+        {showTabWarning && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-gradient-to-br from-orange-900/90 to-red-900/90 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full border-2 border-orange-500 shadow-2xl">
+              <div className="text-center space-y-6">
+                <AlertTriangle className="w-16 h-16 text-orange-400 mx-auto animate-bounce" />
+                <div>
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    👀 Hey! Stay Focused!
+                  </h3>
+                  <p className="text-orange-200 text-lg">
+                    Your mouse left the page or you switched tabs. Stay here to
+                    learn better!
+                  </p>
+                </div>
+
+                <div className="bg-black/30 rounded-lg p-4 space-y-2">
+                  <p className="text-white font-semibold text-lg">
+                    Distractions:{" "}
+                    <span className="text-orange-400">
+                      {tabSwitchCount + mouseLeaveCount}
+                    </span>
+                  </p>
+                  <div className="text-sm text-orange-200 space-y-1">
+                    <p>
+                      🖱️ Mouse left page:{" "}
+                      <span className="font-semibold">{mouseLeaveCount}x</span>
+                    </p>
+                    <p>
+                      🔄 Tab switches:{" "}
+                      <span className="font-semibold">{tabSwitchCount}x</span>
+                    </p>
+                  </div>
+                  <p className="text-orange-300 text-xs mt-2 italic">
+                    💡 Staying focused helps you learn better!
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleDismissWarning}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl font-bold text-lg hover:scale-105 transition-transform shadow-lg"
+                >
+                  ✓ Got it! Back to Quiz
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Progress Bar */}
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4">
